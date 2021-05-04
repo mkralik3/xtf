@@ -29,10 +29,10 @@ jobs:
       - name: maven-settings-xml-action
         uses: whelk-io/maven-settings-xml-action@v12
         with:
-          servers: '[{ "id": "bintray-xtf-cz-xtf", "username": "${env.BINTRAY_USER}", "password": "${env.BINTRAY_API_KEY}" },{ "id": "oss-jfrog-snapshots", "username": "${env.BINTRAY_USER}", "password": "${env.BINTRAY_API_KEY}" }]'
+          servers: '[{ "id": "jboss-releases-repository", "username": "${env.JBOSS_REPO_USER}", "password": "${env.JBOSS_REPO_PASSWORD}" },{ "id": "jboss-snapshots-repository", "username": "${env.JBOSS_REPO_USER}", "password": "${env.JBOSS_REPO_PASSWORD}" }]'
       - name: Maven Deploy
-        run: mvn -X deploy -DskipTests
+        run: mvn -X deploy -DskipTests -Prelease
         env:
-          BINTRAY_API_KEY: ${{ secrets.BINTRAY_API_KEY }}
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+          BINTRAY_API_KEY: ${{ secrets.JBOSS_QA_PASSWORD }}
+          BINTRAY_USER: ${{ secrets.JBOSS_QA_USER }}
 
