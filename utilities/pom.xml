@@ -11,6 +11,7 @@
 	<artifactId>utilities</artifactId>
 	<name>XTF :: Utilities</name>
 	<description>Utilities module - Deprecated</description>
+	<version>0.10-mkralik</version>
 
 	<dependencies>
 		<dependency>
