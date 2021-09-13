@@ -6,6 +6,8 @@ import java.util.Properties;
 
 public class TestConfiguration extends XTFConfiguration {
 
+	public static final String KUBE_RUNTIME = "xtf.config.openshift.kube.runtime";
+
 	public static final String EAP_LOCATION = "xtf.config.eap.location";
 	public static final String IMAGE_EAP_PREFIX = "xtf.eap.";
 	public static final String IMAGE_PREVIOUS_SUFFIX = ".previous";

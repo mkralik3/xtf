@@ -57,6 +57,7 @@ public abstract class TestParent {
 
 	@Before
 	public void setCurrentTestClass() {
+		System.setProperty("org.teiid.ssl.protocol", "TLSv1.2");
 		currentTestClass = this.getClass().getName();
 	}
 

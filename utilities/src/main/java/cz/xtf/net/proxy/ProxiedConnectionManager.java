@@ -41,11 +41,11 @@ public class ProxiedConnectionManager implements Closeable {
 	}
 
 	public static ProxiedConnectionManager toHTTPRouter() {
-		return new ProxiedConnectionManager(OpenShiftNode.router().getIPAddress(), 80);
+		return new ProxiedConnectionManager(TestConfiguration.getInfraIp(), 80);
 	}
 
 	public static ProxiedConnectionManager toTLSRouter() {
-		return new ProxiedConnectionManager(OpenShiftNode.router().getIPAddress(), 443);
+		return new ProxiedConnectionManager(TestConfiguration.getInfraIp(), 443);
 	}
 
 	public ForwardedConnection connect() {

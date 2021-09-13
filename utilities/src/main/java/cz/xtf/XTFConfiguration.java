@@ -1,6 +1,9 @@
 package cz.xtf;
 
 
+import cz.xtf.openshift.OpenShiftUtil;
+import cz.xtf.openshift.OpenShiftUtils;
+import cz.xtf.openshift.OpenshiftUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
@@ -82,6 +85,10 @@ public class XTFConfiguration {
 	private static final String OPENSTACK_OPEN_SECURITY_GROUP = "xtf.config.openstack.security.group.open";
 	private static final String OPENSTACK_USERNAME = "xtf.config.openstack.username";
 	private static final String OPENSTACK_PASSWORD = "xtf.config.openstack.password";
+
+	private static final String INFRA_NODE_IP = "xtf.config.infra.node.ip";
+	private static final String INFRA_DNS_SUFFIX = "infra.node.dns.suffix";
+	private static final String INFRA_DNS_SUFFIX_MISSING = "infra.node.dns.suffix.missing";
 
 	public static final String OC_BINARY_LOCATION = "oc.binary.location";
 
@@ -168,14 +175,17 @@ public class XTFConfiguration {
 		return get().readValue(DOMAIN);
 	}
 
+
 	public static String routeDomain() {
 		String result = get().readValue(DOMAIN);
 		if (StringUtils.isNotBlank(result)) {
 			result = "apps." + result;
-		} else {
+		} else if (StringUtils.isNotBlank(get().readValue(ROUTE_DOMAIN))) {
 			result = get().readValue(ROUTE_DOMAIN);
+		} else {
+			result = "apps." +StringUtils.substringAfter(OpenShiftUtils.master().client().inNamespace("default").routes().list().getItems().get(0).getSpec().getHost(), "apps.");
+			get().properties.setProperty(ROUTE_DOMAIN, result);
 		}
-
 		return result;
 	}
 
@@ -390,8 +400,11 @@ public class XTFConfiguration {
 		String result = get().readValue(DOMAIN);
 		if (StringUtils.isNotBlank(result)) {
 			result = "http://gitlab." + result;
+		} else if (StringUtils.isNotBlank(get().readValue(GITLAB_URL))) {
+		    result = get().readValue(GITLAB_URL);
 		} else {
-			result = get().readValue(GITLAB_URL);
+			result = "http://gitlab." + routeDomain();
+			get().properties.setProperty(GITLAB_URL, result);
 		}
 		return result;
 	}
@@ -476,6 +489,31 @@ public class XTFConfiguration {
 
 	public static String testJenkinsRerun() {
 		return get().readValue(TEST_JENKINS_RERUN);
+	}
+
+	public static String getInfraIp() {
+		String result = get().readValue(INFRA_NODE_IP);
+		if (StringUtils.isBlank(result)){
+			get().properties.setProperty(INFRA_NODE_IP,
+				OpenShiftUtils.master().getNodes().stream().filter(n -> n.getMetadata().getName().contains("infra")).findFirst().get()
+                    .getStatus().getAddresses().stream().filter(addr -> addr.getType().contains("InternalIP")).findFirst().get()
+                    .getAddress());
+		}
+		return get().readValue(INFRA_NODE_IP);
+	}
+
+	public static String getNodeDnsSuffix() {
+		String dns_suffix_missing = get().readValue(INFRA_DNS_SUFFIX_MISSING);
+		if (StringUtils.isNotBlank(dns_suffix_missing) && Boolean.parseBoolean(dns_suffix_missing)){
+			String result = get().readValue(INFRA_DNS_SUFFIX);
+			if (StringUtils.isBlank(result)){
+				get().properties.setProperty(INFRA_DNS_SUFFIX,
+					".int." + routeDomain());
+			}
+			return get().readValue(INFRA_DNS_SUFFIX);
+		} else {
+			return "";
+		}
 	}
 
 	public static PingProtocol pingProtocol() {

@@ -21,12 +21,15 @@ public class DockerContainer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DockerContainer.class);
 	private OpenShiftNode node;
 	private String containerId;
+	private String runtime;
 
 	private DockerContainer(final String host, final String containerId) {
 		this.node = new OpenShiftNode(
 				host.equals(TestConfiguration.CDK_INTERNAL_HOSTNAME) ? TestConfiguration.CDK_IP
 						: host);
 		this.containerId = containerId;
+		this.runtime  = TestConfiguration.get().readValue(
+			TestConfiguration.KUBE_RUNTIME, "docker");
 	}
 
 	/**
@@ -91,22 +94,22 @@ public class DockerContainer {
 	}
 
 	public void dockerPause() {
-		boolean ret = dockerCmdReturningContainerIdOnSuccess(containerId -> "docker pause " + containerId);
+		boolean ret = dockerCmdReturningContainerIdOnSuccess(containerId -> runtime + " pause " + containerId);
 		Assertions.assertThat(ret).isEqualTo(true).as("Error executing docker pause");
 	}
 
 	public void dockerUnPause() {
-		boolean ret = dockerCmdReturningContainerIdOnSuccess(containerId -> "docker unpause " + containerId);
+		boolean ret = dockerCmdReturningContainerIdOnSuccess(containerId -> runtime + " unpause " + containerId);
 		Assertions.assertThat(ret).isEqualTo(true).as("Error executing docker unpause");
 	}
 
 	public boolean isRunning() {
-		return Boolean.parseBoolean(dockerCmd(containerId -> " docker inspect -f '{{.State.Running}}'  " + containerId));
+		return Boolean.parseBoolean(dockerCmd(containerId -> runtime + " inspect -f '{{.State.Running}}'  " + containerId));
 	}
 
 	public void dockerJvmKill() {
 		String javaPid = dockerCmd(
-				containerId -> "docker exec "
+				containerId -> runtime + " exec "
 						+ containerId
 						+ " /bin/sh -c "
 						+ "'(for i in `ls /proc/*/exe`; do j=`readlink $i`; echo $i $j; done) | grep java | cut -d'/' -f3'")
@@ -131,17 +134,17 @@ public class DockerContainer {
 	}
 
 	public void dockerStop() {
-		boolean ret = dockerCmdReturningContainerIdOnSuccess(containerId -> "docker stop " + containerId);
+		boolean ret = dockerCmdReturningContainerIdOnSuccess(containerId -> runtime + " stop " + containerId);
 		Assertions.assertThat(ret).isEqualTo(true).as("Error executing docker stop");
 	}
 
 	@Deprecated // use dockerLogs(OpenShiftNode.CommandResultConsumer resultConsumer) to not copy logs in memory in Strings
 	public String dockerLogs() {
-		return dockerCmd(containerId -> "docker logs " + containerId);
+		return dockerCmd(containerId -> runtime + " logs " + containerId);
 	}
 
 	public void dockerLogs(OpenShiftNode.CommandResultConsumer resultConsumer) {
-		dockerCmd(containerId -> "docker logs " + containerId, resultConsumer);
+		dockerCmd(containerId -> runtime + " logs " + containerId, resultConsumer);
 	}
 
 	public String findLineInLog(final String regex) {
